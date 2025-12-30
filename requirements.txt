@@ -1,0 +1,8 @@
+pandas
+tiktoken
+spacy
+litellm
+sentence-transformers
+qdrant_client
+fastembed
+lunary
