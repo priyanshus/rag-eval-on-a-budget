@@ -4,7 +4,9 @@ from pathlib import Path
 from typing import List
 
 import pandas as pd
+
 from app.ingestion.models import RawDocumentModel
+
 
 class CsvLoaderService:
     def __init__(self, file_path: str):
@@ -31,7 +33,7 @@ class CsvLoaderService:
                     title=row.get("title"),
                     author=row.get("author"),
                     link=row.get("link"),
-                    article=row.get("text", ""),
+                    article=row.get("text"),
                     hash=self._row_to_hash(row)
                 )
             )

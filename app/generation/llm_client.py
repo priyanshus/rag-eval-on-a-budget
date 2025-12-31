@@ -34,7 +34,7 @@ class LLMClient:
             {
                 "role": "system",
                 "content": system_prompt
-                           or "Answer only using the provided context. If the answer is not present, say you don't know. If metadata is available, please cite them in answer.",
+                           or "Answer only using the provided context. If the answer is not present, say you don't know. If context metadata is available, please mention the author, title and link of context.",
             }
         )
 
@@ -88,4 +88,3 @@ class LLMClient:
             return response
         else:
             return response["choices"][0]["message"]["content"]
-

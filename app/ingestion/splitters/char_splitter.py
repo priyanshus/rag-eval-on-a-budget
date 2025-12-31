@@ -1,5 +1,5 @@
+from typing import List
 
-from typing import Dict, List
 from .base import BaseSplitter
 
 
@@ -9,17 +9,14 @@ class CharSplitter(BaseSplitter):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
 
-    def split(self, text: str, metadata: Dict) -> List[Dict]:
+    def split(self, text: str) -> List[str]:
         chunks = []
         start = 0
 
         while start < len(text):
             end = start + self.chunk_size
             chunk = text[start:end]
-            chunks.append({
-                "text": chunk,
-                "metadata": metadata.copy()
-            })
+            chunks.append(chunk)
             start += self.chunk_size - self.chunk_overlap
 
         return chunks

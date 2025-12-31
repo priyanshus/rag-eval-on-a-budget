@@ -1,19 +1,19 @@
 import uuid
-from typing import List
 from dataclasses import asdict
+from typing import List
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, SparseVectorParams, PointStruct, SparseVector
 
-from app.ingestion.models import HybridIngestionDocumentModel
+from app.ingestion.models import IngestionDocumentModel
 
 
 class HybridBatchIngestor:
     def __init__(
-        self,
-        collection_name: str,
-        client: QdrantClient,
-        dense_vector_size: int = 384
+            self,
+            collection_name: str,
+            client: QdrantClient,
+            dense_vector_size: int = 384
     ):
         self.client = client
         self.collection_name = collection_name
@@ -37,7 +37,7 @@ class HybridBatchIngestor:
         else:
             print(f"Collection already exists: {self.collection_name}")
 
-    def batch_upsert(self, docs: List[HybridIngestionDocumentModel]):
+    def batch_upsert(self, docs: List[IngestionDocumentModel]):
         points: List[PointStruct] = []
 
         for doc in docs:
@@ -52,7 +52,7 @@ class HybridBatchIngestor:
                 raise ValueError("bm25_vectors must be a dict with 'indices' and 'values'.")
 
             point = PointStruct(
-                id=str(uuid.UUID(doc.metadata.hash[:32])),
+                id=str(uuid.uuid4()),
                 payload=payload,
                 vector={
                     "dense": doc.dense_vectors,
@@ -63,7 +63,8 @@ class HybridBatchIngestor:
 
         self.client.upsert(
             collection_name=self.collection_name,
-            points=points
+            points=points,
+            wait=True
         )
 
         print(f"Uploaded {len(points)} documents to Qdrant collection '{self.collection_name}'")

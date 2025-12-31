@@ -1,16 +1,7 @@
 # splitters/base.py
-from typing import List, Dict
+from typing import List
 
 
 class BaseSplitter:
-    def split(self, text: str, metadata: Dict) -> List[Dict]:
-        """
-        Returns:
-        [
-          {
-            "text": chunk_text,
-            "metadata": {...}
-          }
-        ]
-        """
+    def split(self, text: str) -> List[str]:
         raise NotImplementedError

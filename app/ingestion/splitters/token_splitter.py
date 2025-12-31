@@ -1,22 +1,23 @@
-# splitters/token_splitter.py
+from typing import List
+
 import tiktoken
-from typing import Dict, List
+
 from .base import BaseSplitter
 
 
 class TokenSplitter(BaseSplitter):
     def __init__(
-        self,
-        model_name: str = "gpt-4o-mini",
-        chunk_size: int = 300,
-        chunk_overlap: int = 50,
+            self,
+            model_name: str = "gpt-4o-mini",
+            chunk_size: int = 300,
+            chunk_overlap: int = 50,
     ):
         assert chunk_overlap < chunk_size
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.encoder = tiktoken.encoding_for_model(model_name)
 
-    def split(self, text: str, metadata: Dict) -> List[Dict]:
+    def split(self, text: str) -> List[str]:
         tokens = self.encoder.encode(text)
         chunks = []
 
@@ -26,10 +27,7 @@ class TokenSplitter(BaseSplitter):
             chunk_tokens = tokens[start:end]
             chunk_text = self.encoder.decode(chunk_tokens)
 
-            chunks.append({
-                "text": chunk_text,
-                "metadata": metadata.copy()
-            })
+            chunks.append(chunk_text)
 
             start += self.chunk_size - self.chunk_overlap
 

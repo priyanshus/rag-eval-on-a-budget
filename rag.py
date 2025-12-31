@@ -12,7 +12,7 @@ if __name__ == '__main__':
         model="openai/gpt-4o-mini"
     )
 
-    question = "What probabilistic process allows scammers to produce a group of users?"
+    question = "What are the reasons for failure of Rag evaluation?"
     client = QdrantClient(url="http://localhost:6333")
 
     # 1. Retrieve only from dense vector collection
@@ -43,5 +43,3 @@ if __name__ == '__main__':
     print("-" * 80)
     print(f"System Reply: {reply}")
     print("-" * 80)
-
-

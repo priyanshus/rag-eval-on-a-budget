@@ -18,16 +18,19 @@ if __name__ == '__main__':
     service = DenseVectorRetrievalService(client)
     matches = service.similarity_search(query_dense)
 
+    if len(matches) == 0:
+        print("-" * 10 + "No result from Dense Vector Store" + "-" * 10)
+
     for match in matches:
+        print(f"Vector Store: Dense")
         print(f"Score: {match['score']}")
         print(f"Text: {match['text']}")
         print(f"Metadata: {match['metadata']}")
         print("-" * 40)
 
-    #2. Retrieve from hybrid collection
-    print("-" * 10 + "Hybrid Retrieval" + "-" * 10 )
+    # 2. Retrieve from hybrid collection
+    print("-" * 10 + "Hybrid Retrieval" + "-" * 10)
     sparse_model = SparseTextEmbedding("Qdrant/bm25")
-
 
     # Dense vector
     query_dense = dense_model.encode(query)
@@ -41,6 +44,7 @@ if __name__ == '__main__':
     results = service.similarity_search(query_dense, query_sparse, k=5)
 
     for match in results:
+        print(f"Vector Store: Hybrid")
         print(f"Score: {match['score']}")
         print(f"Text: {match['text']}")
         print(f"Metadata: {match['metadata']}")

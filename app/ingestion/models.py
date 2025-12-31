@@ -1,5 +1,5 @@
-
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
@@ -10,13 +10,21 @@ class RawDocumentModel:
     article: str
     hash: str
 
-@dataclass
-class HybridIngestionDocumentModel:
-    metadata: RawDocumentModel
-    dense_vectors: list[float]
-    bm25_vectors: list[float]
 
 @dataclass
-class DenseIngestionDocumentModel:
+class ChunkModel:
+    chunked_text: str
+    hash: str
+
+
+@dataclass
+class ChunkedDocumentModel:
     metadata: RawDocumentModel
-    dense_vectors: list[float]
+    chunks: List[ChunkModel]
+
+
+@dataclass
+class IngestionDocumentModel:
+    metadata: RawDocumentModel
+    dense_vectors: List[float]
+    bm25_vectors: {}
