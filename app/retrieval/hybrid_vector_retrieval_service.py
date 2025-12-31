@@ -6,17 +6,17 @@ from qdrant_client.models import SparseVector
 
 
 class HybridQueryService:
-    def __init__(self, client: QdrantClient, collection_name: str):
+    def __init__(self, client: QdrantClient, collection_name="articles_hybrid_collection"):
         self.client = client
         self.collection_name = collection_name
 
     def similarity_search(
-        self,
-        query_dense: List[float],
-        query_sparse: Dict[str, List[float]],
-        k: int = 5,
-        dense_limit: int = 20,
-        sparse_limit: int = 20
+            self,
+            query_dense: List[float],
+            query_sparse: Dict[str, List[float]],
+            k: int = 5,
+            dense_limit: int = 20,
+            sparse_limit: int = 20
     ) -> List[Dict[str, Any]]:
         """
         Perform a hybrid search via RRF fusion of dense + sparse prefetch queries.
@@ -41,7 +41,6 @@ class HybridQueryService:
             limit=dense_limit
         )
 
-
         # Execute the hybrid query
         results = self.client.query_points(
             collection_name=self.collection_name,
@@ -65,4 +64,3 @@ class HybridQueryService:
             }
             for point in results.points
         ]
-

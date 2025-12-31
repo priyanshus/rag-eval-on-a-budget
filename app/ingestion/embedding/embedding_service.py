@@ -4,7 +4,7 @@ from fastembed import SparseTextEmbedding, SparseEmbedding
 from numpy import ndarray
 from sentence_transformers import SentenceTransformer
 
-from app.ingestion.models import IngestionDocumentModel, ChunkedDocumentModel
+from app.ingestion.models import ChunkedDocumentsOutput
 
 
 class EmbeddingService:
@@ -14,59 +14,65 @@ class EmbeddingService:
             sparse_model: str = "Qdrant/bm25",
     ):
         self.dense_model = SentenceTransformer(dense_model)
-
         self.sparse_model = SparseTextEmbedding(model_name=sparse_model)
 
     def embed_chunks_dense(self, docs: List[str]) -> ndarray:
         return self.dense_model.encode(docs, show_progress_bar=True)
 
-    def embed_chunks_sparse(self, docs: List[str]) -> list[SparseEmbedding]:
+    def embed_chunks_sparse(self, docs: List[str]) -> List[SparseEmbedding]:
         return list(self.sparse_model.embed(docs))
 
     def embed_documents_for_hybrid_ingestion(
-            self, chunked_docs: List[ChunkedDocumentModel]
-    ) -> List[IngestionDocumentModel]:
-        embedded_docs: List[IngestionDocumentModel] = []
+            self, chunked_docs: List[ChunkedDocumentsOutput]
+    ) -> List[ChunkedDocumentsOutput]:
+        """
+        For each ChunkedDocumentsOutput, compute dense and sparse embeddings
+        and store them inside each ChunkedDocumentModel.
+        """
+        embedded_documents: List[ChunkedDocumentsOutput] = []
 
-        for doc in chunked_docs:
-            chunked_text = [chunk.chunked_text for chunk in doc.chunks]
+        for doc_output in chunked_docs:
+            chunk_texts = [chunk.chunk_text for chunk in doc_output.chunks]
 
-            # Dense embeddings
-            dense_embeddings = self.embed_chunks_dense(chunked_text)
+            # Compute embeddings
+            dense_embeddings = self.embed_chunks_dense(chunk_texts)
+            sparse_embeddings = self.embed_chunks_sparse(chunk_texts)
 
-            # Sparse embeddings
-            sparse_embeddings = self.embed_chunks_sparse(chunked_text)
+            # Update each chunk with embeddings
+            for chunk, dense_vec, sparse_vec in zip(
+                    doc_output.chunks, dense_embeddings, sparse_embeddings
+            ):
+                chunk.dense_vector = dense_vec.tolist()
+                chunk.sparse_vector = {
+                    "indices": sparse_vec.indices.tolist() if hasattr(sparse_vec.indices, "tolist") else list(
+                        sparse_vec.indices),
+                    "values": sparse_vec.values.tolist() if hasattr(sparse_vec.values, "tolist") else list(
+                        sparse_vec.values)
+                }
+            # or store indices+values if needed
 
-            for dense_vec, sparse_vec in zip(dense_embeddings, sparse_embeddings):
-                hybrid_doc_model = IngestionDocumentModel(
-                    metadata=doc.metadata,
-                    dense_vectors=dense_vec,
-                    bm25_vectors={
-                        "indices": sparse_vec.indices,
-                        "values": sparse_vec.values,
-                    },
-                )
-                embedded_docs.append(hybrid_doc_model)
+            embedded_documents.append(doc_output)
 
-        return embedded_docs
+        return embedded_documents
 
     def embed_documents_for_dense_ingestion(
-            self, raw_documents: List[ChunkedDocumentModel]
-    ) -> List[IngestionDocumentModel]:
-        embedded_docs: List[IngestionDocumentModel] = []
+            self, chunked_docs: List[ChunkedDocumentsOutput]
+    ) -> List[ChunkedDocumentsOutput]:
+        """
+        Compute only dense embeddings for ingestion.
+        """
+        embedded_documents: List[ChunkedDocumentsOutput] = []
 
-        for doc in raw_documents:
-            chunked_text = [chunk.chunked_text for chunk in doc.chunks]
+        for doc_output in chunked_docs:
+            chunk_texts = [chunk.chunk_text for chunk in doc_output.chunks]
 
-            dense_embeddings = self.embed_chunks_dense(chunked_text)
+            dense_embeddings = self.embed_chunks_dense(chunk_texts)
 
-            for dense_vec in dense_embeddings:
-                ingestion_doc_model = IngestionDocumentModel(
-                    metadata=doc.metadata,
-                    dense_vectors=dense_vec,
-                    bm25_vectors={}
-                )
+            # Update chunks with dense vectors
+            for chunk, dense_vec in zip(doc_output.chunks, dense_embeddings):
+                chunk.dense_vector = dense_vec.tolist()
+                chunk.sparse_vector = None
 
-                embedded_docs.append(ingestion_doc_model)
+            embedded_documents.append(doc_output)
 
-        return embedded_docs
+        return embedded_documents

@@ -24,7 +24,7 @@ class LLMClient:
     def _build_messages(
             self,
             question: str,
-            context_chunks: List[str],
+            context_chunks: List[Dict],
             system_prompt: Optional[str] = None,
     ) -> List[Dict]:
 
@@ -42,7 +42,7 @@ class LLMClient:
             messages.append(
                 {
                     "role": "system",
-                    "content": f"Context {i + 1}: {chunk['text']} metadata: {chunk['metadata']}",
+                    "content": f"Context {i + 1}: {chunk['metadata']['chunk_text']} source: {chunk['metadata']['source']} title: {chunk['metadata']['title']}",
                 }
             )
 
@@ -58,14 +58,10 @@ class LLMClient:
     def generate(
             self,
             question: str,
-            context_chunks: List[str],
+            context_chunks: List[Dict],
             system_prompt: Optional[str] = None,
             stream: bool = False,
     ):
-        """
-        Run the RAG query.
-        """
-
         messages = self._build_messages(
             question=question,
             context_chunks=context_chunks,

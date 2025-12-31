@@ -6,3 +6,4 @@ sentence-transformers
 qdrant_client
 fastembed
 lunary
+BeautifulSoup4

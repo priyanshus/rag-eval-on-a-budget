@@ -1,41 +1,21 @@
 from dotenv import load_dotenv
-from fastembed import SparseTextEmbedding
 from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
 
 from app.generation.llm_client import LLMClient
-from app.retrieval.hybrid_vector_retrieval_service import HybridQueryService
+from app.retrieval_runner import RetrievalRunner
 
 if __name__ == '__main__':
     load_dotenv()
     llm = LLMClient(
-        model="openai/gpt-4o-mini"
+        model="openai/gpt-4o-mini",
+        max_tokens=10000
     )
 
-    question = "What are the reasons for failure of Rag evaluation?"
+    question = "How does the conceptual metaphor “ARGUMENT IS WAR” shape the way people think about arguments? How do they correlated it with ARGUMENT IS A DANCE?"
     client = QdrantClient(url="http://localhost:6333")
+    runner = RetrievalRunner(client=client, query=question)
 
-    # 1. Retrieve only from dense vector collection
-    dense_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
-    sparse_model = SparseTextEmbedding("Qdrant/bm25")
-
-    # Dense vector
-    query_dense = dense_model.encode(question)
-
-    # Sparse vector
-    sparse_vec = next(sparse_model.embed(question))
-    query_sparse = {"indices": sparse_vec.indices, "values": sparse_vec.values}
-
-    service = HybridQueryService(client, "articles_hybrid_collection")
-
-    results = service.similarity_search(query_dense, query_sparse, k=5)
-
-    # for match in results:
-    #     print(f"Score: {match['score']}")
-    #     print(f"Text: {match['text']}")
-    #     print(f"Metadata: {match['metadata']}")
-
+    results = runner.fetch_similarity_result()
     reply = llm.generate(question=question, context_chunks=results)
 
     print("-" * 80)

@@ -5,7 +5,7 @@ from typing import List
 
 import pandas as pd
 
-from app.ingestion.models import RawDocumentModel
+from app.ingestion.models import RawDocument
 
 
 class CsvLoaderService:
@@ -23,18 +23,19 @@ class CsvLoaderService:
         )
         return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
-    def csv_reader(self) -> List[RawDocumentModel]:
+    def csv_reader(self) -> List[RawDocument]:
         df = pd.read_csv(self.csv_path)
-        documents: List[RawDocumentModel] = []
+        documents: List[RawDocument] = []
 
-        for _, row in df.iterrows():
+        for idx, row in df.iterrows():
             documents.append(
-                RawDocumentModel(
-                    title=row.get("title"),
-                    author=row.get("author"),
-                    link=row.get("link"),
-                    article=row.get("text"),
-                    hash=self._row_to_hash(row)
+                RawDocument(
+                    title=row.get("title") if pd.notna(row.get("title")) else None,
+                    author=row.get("author") if pd.notna(row.get("author")) else None,
+                    source=row.get("link") if pd.notna(row.get("link")) else None,
+                    text=row.get("text"),
+                    hash=self._row_to_hash(row),
+                    row_id=int(idx)
                 )
             )
 
