@@ -71,7 +71,7 @@ class RetrievalRunner:
 
 
 if __name__ == '__main__':
-    query = "How does the conceptual metaphor “ARGUMENT IS WAR” shape the way people think about arguments?"
+    query = "What factors beyond individual diet and exercise contribute to rising obesity rates, and how do these factors interact?"
     client = QdrantClient(url="http://localhost:6333")
 
     retrieval_runner = RetrievalRunner(query=query, client=client)

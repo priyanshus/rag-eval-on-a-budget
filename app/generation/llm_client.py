@@ -5,6 +5,39 @@ import litellm
 from litellm import completion
 
 
+def _build_qa_messages(
+        question: str,
+        context_chunks: List[Dict],
+        system_prompt: Optional[str] = None,
+) -> List[Dict]:
+    messages = []
+
+    messages.append(
+        {
+            "role": "system",
+            "content": system_prompt
+                       or "Answer only using the provided context. If the answer is not present, say you don't know. If context metadata is available, please mention the author, title and link of context.",
+        }
+    )
+
+    for i, chunk in enumerate(context_chunks):
+        messages.append(
+            {
+                "role": "system",
+                "content": f"Context {i + 1}: {chunk['metadata']['chunk_text']} source: {chunk['metadata']['source']} title: {chunk['metadata']['title']}",
+            }
+        )
+
+    messages.append(
+        {
+            "role": "user",
+            "content": question,
+        }
+    )
+
+    return messages
+
+
 class LLMClient:
     def __init__(
             self,
@@ -21,40 +54,6 @@ class LLMClient:
         self.temperature = temperature
         self.max_tokens = max_tokens
 
-    def _build_messages(
-            self,
-            question: str,
-            context_chunks: List[Dict],
-            system_prompt: Optional[str] = None,
-    ) -> List[Dict]:
-
-        messages = []
-
-        messages.append(
-            {
-                "role": "system",
-                "content": system_prompt
-                           or "Answer only using the provided context. If the answer is not present, say you don't know. If context metadata is available, please mention the author, title and link of context.",
-            }
-        )
-
-        for i, chunk in enumerate(context_chunks):
-            messages.append(
-                {
-                    "role": "system",
-                    "content": f"Context {i + 1}: {chunk['metadata']['chunk_text']} source: {chunk['metadata']['source']} title: {chunk['metadata']['title']}",
-                }
-            )
-
-        messages.append(
-            {
-                "role": "user",
-                "content": question,
-            }
-        )
-
-        return messages
-
     def generate(
             self,
             question: str,
@@ -62,7 +61,7 @@ class LLMClient:
             system_prompt: Optional[str] = None,
             stream: bool = False,
     ):
-        messages = self._build_messages(
+        messages = _build_qa_messages(
             question=question,
             context_chunks=context_chunks,
             system_prompt=system_prompt,
@@ -70,6 +69,27 @@ class LLMClient:
 
         litellm.success_callback = ["lunary"]
 
+        response = completion(
+            model=self.model,
+            messages=messages,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            stream=stream,
+            api_key=self._api_key,
+            base_url=self._api_base
+        )
+
+        if stream:
+            return response
+        else:
+            return response["choices"][0]["message"]["content"]
+
+    def generate_questions(
+            self,
+            messages,
+            stream: bool = False,
+    ):
+        litellm.success_callback = ["lunary"]
         response = completion(
             model=self.model,
             messages=messages,
